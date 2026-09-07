@@ -1,0 +1,726 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  background: #10151c;
+  color: white;
+  font-family: system-ui, sans-serif;
+}
+
+button {
+  font: inherit;
+}
+
+.app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  padding: 20px;
+}
+
+h1 {
+  margin: 0;
+  letter-spacing: 0.15em;
+}
+
+/* =========================
+   BOARD
+========================= */
+
+.board {
+  /*
+    横幅は最大620px。
+    Expertでも12列なので、
+    横方向を基準にタイルサイズを決める。
+  */
+  width: min(90vw, 620px);
+
+  display: grid;
+
+  grid-template-columns: repeat(var(--board-cols), 1fr);
+
+  gap: 4px;
+}
+
+.tile {
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+
+  border: 1px solid #475569;
+  border-radius: 8px;
+
+  color: #475569;
+
+  cursor: pointer;
+  overflow: hidden;
+
+  transition: background 0.12s ease, border-color 0.12s ease;
+}
+
+/*
+  そのタイルから出ているパイプに
+  1本でも未接続がある。
+*/
+.tile-broken {
+  background: #080b10;
+  border-color: #252b35;
+}
+
+/*
+  そのタイルから出ている全パイプが
+  隣と正しく接続済み。
+*/
+.tile-complete {
+  background: #303741;
+  border-color: #56606e;
+}
+
+.tile-broken:hover {
+  background: #11161d;
+}
+
+.tile-complete:hover {
+  background: #3b4450;
+}
+
+.pipe-svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+
+  color: #475569;
+
+  transition: transform 0.15s ease;
+}
+
+.tile-connected .pipe-svg {
+  color: var(--water-color);
+}
+
+/* =========================
+   STATUS / CONTROLS
+========================= */
+
+.controls {
+  display: flex;
+  gap: 12px;
+}
+
+.control-button {
+  padding: 10px 20px;
+
+  border: 0;
+  border-radius: 8px;
+
+  background: white;
+  color: #111827;
+
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.control-button:hover {
+  opacity: 0.85;
+}
+
+.reset-button {
+  padding: 10px 24px;
+
+  border: 0;
+  border-radius: 8px;
+
+  background: white;
+  color: #111827;
+
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.status {
+  min-height: 28px;
+
+  font-size: 14px;
+  color: #94a3b8;
+}
+
+.clear-message {
+  color: var(--water-color);
+  font-size: 18px;
+  letter-spacing: 0.12em;
+}
+
+/* =========================
+   WATER SOURCE
+========================= */
+
+.puzzle-area {
+  position: relative;
+
+  width: min(90vw, 620px);
+
+  padding-top: 92px;
+}
+
+.water-source {
+  position: absolute;
+
+  top: 0;
+  left: 50%;
+
+  transform: translateX(-50%);
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  z-index: 2;
+}
+
+.source-label {
+  margin-bottom: 2px;
+
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+
+  color: #64748b;
+}
+
+.water-source {
+  position: absolute;
+
+  top: 0;
+
+  /*
+    最上段中央のマス中央へ配置。
+  */
+  left: 50%;
+
+  transform: translateX(-50%);
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  color: var(--water-color);
+
+  z-index: 2;
+}
+
+.source-label {
+  margin-bottom: 2px;
+
+  font-size: 10px;
+  font-weight: 800;
+
+  letter-spacing: 0.16em;
+
+  color: #64748b;
+}
+
+.source-body {
+  width: 46px;
+  height: 46px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 50%;
+
+  background: #1e293b;
+
+  border: 2px solid #475569;
+
+  transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+}
+
+.water-drop-svg {
+  width: 25px;
+  height: 30px;
+
+  color: var(--water-color);
+
+  filter: drop-shadow(
+    0 0 4px color-mix(in srgb, var(--water-color) 60%, transparent)
+  );
+}
+
+/*
+  重要:
+  幅を「1タイル分」にする。
+
+  Board全体の幅 / 列数
+  と同じなので、
+  難易度にかかわらず
+  パイプの見かけの太さが一致する。
+*/
+.source-connector {
+  width: calc(
+    (min(90vw, 620px) - ((var(--board-cols) - 1) * 4px)) / var(--board-cols)
+  );
+
+  height: 34px;
+
+  color: #475569;
+}
+
+.source-pipe-svg {
+  width: 100%;
+  height: 100%;
+
+  display: block;
+
+  color: inherit;
+}
+
+.water-source-active .source-body {
+  border-color: var(--water-color);
+
+  background: color-mix(in srgb, var(--water-color) 18%, #172554);
+
+  box-shadow: 0 0 15px color-mix(in srgb, var(--water-color) 70%, transparent);
+}
+
+.water-source-active .source-connector {
+  color: var(--water-color);
+
+  filter: drop-shadow(
+    0 0 5px color-mix(in srgb, var(--water-color) 80%, transparent)
+  );
+}
+
+.water-source-active .source-body {
+  border-color: var(--water-color);
+
+  background: color-mix(in srgb, var(--water-color) 18%, #172554);
+
+  box-shadow: 0 0 15px color-mix(in srgb, var(--water-color) 70%, transparent);
+}
+
+.water-source-active .source-pipe {
+  background: var(--water-color);
+
+  box-shadow: 0 0 8px color-mix(in srgb, var(--water-color) 80%, transparent);
+}
+
+/* =========================
+   CLEAR / FLOW ANIMATION
+========================= */
+
+.tile-flowing {
+  animation: tileWaterArrival 0.35s ease-out var(--flow-delay) both;
+}
+
+.tile-flowing .pipe-svg line {
+  stroke-dasharray: 16 10;
+
+  animation: pipeWaterFlow 0.5s linear var(--flow-delay) infinite;
+}
+
+.tile-flowing .pipe-svg circle {
+  animation: pipePulse 0.8s ease-in-out var(--flow-delay) infinite alternate;
+}
+
+.water-source-flowing .source-body {
+  animation: sourcePulse 0.7s ease-in-out infinite alternate;
+}
+
+.water-source-flowing .source-pipe-svg {
+  animation: sourcePipePulse 0.55s ease-in-out infinite alternate;
+}
+
+.water-source-flowing .water-drop-svg {
+  animation: waterDropPulse 0.7s ease-in-out infinite alternate;
+}
+
+@keyframes sourcePipePulse {
+  from {
+    opacity: 0.65;
+
+    filter: drop-shadow(0 0 2px var(--water-color));
+  }
+
+  to {
+    opacity: 1;
+
+    filter: drop-shadow(0 0 9px var(--water-color));
+  }
+}
+
+@keyframes waterDropPulse {
+  from {
+    transform: scale(0.92);
+  }
+
+  to {
+    transform: scale(1.08);
+  }
+}
+
+@keyframes tileWaterArrival {
+  0% {
+    background: #1e293b;
+
+    box-shadow: inset 0 0 0
+      color-mix(in srgb, var(--water-color) 0%, transparent);
+  }
+
+  50% {
+    background: color-mix(in srgb, var(--water-color) 35%, #0f172a);
+
+    box-shadow: inset 0 0 18px
+      color-mix(in srgb, var(--water-color) 75%, transparent);
+  }
+
+  100% {
+    background: color-mix(in srgb, var(--water-color) 15%, #172554);
+  }
+}
+
+@keyframes pipeWaterFlow {
+  from {
+    stroke-dashoffset: 0;
+  }
+
+  to {
+    stroke-dashoffset: -26;
+  }
+}
+
+@keyframes pipePulse {
+  from {
+    opacity: 0.7;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes sourcePulse {
+  from {
+    box-shadow: 0 0 8px color-mix(in srgb, var(--water-color) 40%, transparent);
+  }
+
+  to {
+    box-shadow: 0 0 24px
+      color-mix(in srgb, var(--water-color) 100%, transparent);
+  }
+}
+
+@keyframes sourceWaterFlow {
+  from {
+    background-position: 0 0;
+  }
+
+  to {
+    background-position: 0 200%;
+  }
+}
+
+/* =========================
+   GAME HEADER / TIMER
+========================= */
+
+.game-header {
+  width: min(90vw, 620px);
+
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+
+  align-items: center;
+}
+
+.game-header h1 {
+  text-align: center;
+}
+
+.header-spacer {
+  width: 100%;
+}
+
+.small-button {
+  justify-self: start;
+
+  padding: 8px 14px;
+
+  border: 0;
+  border-radius: 8px;
+
+  background: #334155;
+  color: white;
+
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.difficulty-label {
+  margin-top: 4px;
+
+  text-align: center;
+
+  color: #94a3b8;
+
+  font-size: 13px;
+  letter-spacing: 0.12em;
+}
+
+.timer-wrapper {
+  justify-self: end;
+}
+
+.timer {
+  min-width: 90px;
+
+  padding: 8px 12px;
+
+  border-radius: 8px;
+
+  background: #0f172a;
+  border: 1px solid #334155;
+
+  color: #e2e8f0;
+
+  font-variant-numeric: tabular-nums;
+
+  font-size: 18px;
+  font-weight: 700;
+
+  text-align: center;
+  letter-spacing: 0.05em;
+}
+
+/* =========================
+   MENU
+========================= */
+
+.menu-panel {
+  width: min(92vw, 620px);
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  gap: 24px;
+
+  padding: 32px;
+
+  border-radius: 18px;
+
+  background: #172033;
+  border: 1px solid #334155;
+}
+
+.menu-subtitle {
+  margin: -10px 0 0;
+
+  color: #94a3b8;
+}
+
+.difficulty-buttons {
+  display: flex;
+
+  gap: 14px;
+
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.difficulty-button {
+  width: 150px;
+  min-height: 110px;
+
+  display: flex;
+  flex-direction: column;
+
+  align-items: center;
+  justify-content: center;
+
+  gap: 7px;
+
+  border: 1px solid #475569;
+  border-radius: 12px;
+
+  background: #1e293b;
+  color: white;
+
+  cursor: pointer;
+
+  transition: transform 0.15s ease, background 0.15s ease;
+}
+
+.difficulty-button:hover {
+  transform: translateY(-3px);
+
+  background: #27364b;
+}
+
+.difficulty-button strong {
+  font-size: 17px;
+  letter-spacing: 0.08em;
+}
+
+.difficulty-button span {
+  color: #7dd3fc;
+
+  font-weight: 700;
+}
+
+.difficulty-button small {
+  color: #94a3b8;
+
+  font-size: 10px;
+}
+
+.highscore-menu-button {
+  padding: 12px 28px;
+
+  border: 0;
+  border-radius: 9px;
+
+  background: white;
+  color: #111827;
+
+  font-weight: 700;
+
+  cursor: pointer;
+}
+
+/* =========================
+   HIGHSCORES
+========================= */
+
+.highscore-header {
+  width: min(92vw, 760px);
+
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+
+  align-items: center;
+}
+
+.highscore-header h1 {
+  text-align: center;
+}
+
+.highscore-grid {
+  width: min(92vw, 760px);
+
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+
+  gap: 16px;
+}
+
+.highscore-card {
+  padding: 18px;
+
+  border-radius: 12px;
+
+  background: #1e293b;
+  border: 1px solid #334155;
+}
+
+.highscore-card h2 {
+  margin: 0;
+
+  text-align: center;
+}
+
+.highscore-size {
+  margin-top: 4px;
+
+  text-align: center;
+
+  color: #94a3b8;
+
+  font-size: 12px;
+}
+
+.highscore-card ol {
+  padding: 0;
+  margin: 18px 0 0;
+
+  list-style: none;
+}
+
+.highscore-card li {
+  display: flex;
+
+  justify-content: space-between;
+
+  gap: 12px;
+
+  padding: 7px 4px;
+
+  border-bottom: 1px solid #334155;
+
+  font-variant-numeric: tabular-nums;
+}
+
+.score-rank {
+  color: #94a3b8;
+}
+
+.no-score {
+  margin-top: 24px;
+
+  text-align: center;
+
+  color: #64748b;
+}
+
+.clear-records-button {
+  padding: 9px 18px;
+
+  border: 1px solid #7f1d1d;
+  border-radius: 8px;
+
+  background: transparent;
+
+  color: #fca5a5;
+
+  cursor: pointer;
+}
+
+/* =========================
+   RESPONSIVE
+========================= */
+
+@media (max-width: 700px) {
+  .highscore-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .difficulty-buttons {
+    flex-direction: column;
+  }
+
+  .difficulty-button {
+    width: min(80vw, 280px);
+  }
+
+  .game-header {
+    grid-template-columns: auto 1fr auto;
+    gap: 10px;
+  }
+
+  .game-header h1 {
+    font-size: 18px;
+  }
+
+  .timer {
+    min-width: 76px;
+    padding: 7px 8px;
+    font-size: 15px;
+  }
+}
